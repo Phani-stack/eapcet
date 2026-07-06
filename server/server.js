@@ -15,9 +15,6 @@ if (missingEnv.length) {
 
 const PORT = Number(process.env.PORT) || 5000;
 
-// ---------------------------------------------------------------------------
-// Domain constants
-// ---------------------------------------------------------------------------
 
 const CATEGORY_COLUMNS = [
   "oc_boys", "oc_girls", "sc_boys", "sc_girls", "st_boys", "st_girls",
@@ -289,6 +286,28 @@ app.get("/api/colleges/lookup", async (req, res, next) => {
       codes
     );
     res.json({ results: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Add this route below your existing routes (e.g., above app.get("/api/colleges/lookup"))
+app.get("/api/colleges/search-by-name", async (req, res, next) => {
+  try {
+    const queryStr = cleanString(req.query.q, MAX_SEARCH_LEN);
+    if (!queryStr || queryStr.length < 2) {
+      return res.json({ query: queryStr, results: [] });
+    }
+
+    const rows = await safeQuery(
+      `SELECT DISTINCT inst_code, institution_name, district, type, affiliation
+       FROM colleges
+       WHERE institution_name LIKE ?
+       LIMIT 30`,
+      [`%${queryStr}%`]
+    );
+
+    res.json({ query: queryStr, results: rows });
   } catch (err) {
     next(err);
   }
