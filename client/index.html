@@ -400,6 +400,8 @@
     <span class="status-pill" id="connection-status"><span class="status-dot"></span> Checking connection…</span>
   </header>
 
+  
+
   <main>
     <section class="stat-row" id="stat-row" aria-label="Database summary">
       <div class="stat-card"><div class="label">Colleges Indexed</div><div class="value" id="stat-colleges">—</div></div>
@@ -574,6 +576,66 @@
     if (!res.ok) throw new Error((body && body.error) || `Request failed (${res.status})`);
     return body;
   }
+
+  // Target the elements
+const searchInput = document.getElementById('filter-search');
+const dropdown = document.getElementById('search-results-dropdown');
+
+let debounceTimer;
+
+searchInput.addEventListener('input', (e) => {
+  clearTimeout(debounceTimer);
+  const value = e.target.value.trim();
+
+  if (value.length < 2) {
+    dropdown.innerHTML = '';
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  // Debounce API calls to prevent layout thrashing
+  debounceTimer = setTimeout(async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/colleges/search-by-name?q=${encodeURIComponent(value)}`);
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        dropdown.innerHTML = data.results.map(college => `
+          <div class="dropdown-item" data-code="${college.inst_code}" style="padding: 10px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--line); transition: background 0.1s;">
+            <strong style="color: var(--brass); font-family: monospace;">[${college.inst_code}]</strong>
+            <span style="color: var(--ink); font-weight: 500;">${college.institution_name}</span>
+            <div style="font-size: 11px; color: var(--ink-soft); margin-top: 2px;">${college.district} | ${college.type}</div>
+          </div>
+        `).join('');
+
+        dropdown.style.display = 'block';
+
+        // Add click listener to options
+        dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+          item.addEventListener('click', () => {
+            searchInput.value = item.querySelector('span').textContent;
+            dropdown.style.display = 'none';
+
+            // Optional: Trigger full lookup details using existing lookup route
+            console.log(`Selected Institution Code: ${item.dataset.code}`);
+          });
+        });
+      } else {
+        dropdown.innerHTML = '<div style="padding: 10px 12px; font-size: 13px; color: var(--ink-faint);">No colleges found</div>';
+        dropdown.style.display = 'block';
+      }
+    } catch (err) {
+      console.error("Failed to query college names:", err);
+    }
+  }, 300);
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
 
   function fillSelect(el, values){
     values.forEach(v => {
