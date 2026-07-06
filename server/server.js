@@ -19,8 +19,6 @@ const PORT = Number(process.env.PORT) || 5000;
 // Domain constants
 // ---------------------------------------------------------------------------
 
-// Whitelisted reservation-category columns. Never build this list from user
-// input — it is interpolated into SQL, so it must always come from a fixed set.
 const CATEGORY_COLUMNS = [
   "oc_boys", "oc_girls", "sc_boys", "sc_girls", "st_boys", "st_girls",
   "bca_boys", "bca_girls", "bcb_boys", "bcb_girls", "bcc_boys", "bcc_girls",
@@ -30,7 +28,8 @@ const CATEGORY_COLUMNS = [
 const SORT_FIELDS = {
   fee: "college_fee",
   name: "institution_name",
-  margin: "__margin__" // computed column, handled specially
+  margin: "__margin__",
+  rank: "__rank__" // handled dynamically using requested reservation category
 };
 
 const MAX_PAGE_SIZE = 100;
@@ -61,7 +60,7 @@ async function safeQuery(sql, params = []) {
 }
 
 // ---------------------------------------------------------------------------
-// Validation helpers
+// Validation & Normalization helpers
 // ---------------------------------------------------------------------------
 
 function cleanString(value, maxLen) {
@@ -91,10 +90,18 @@ function parsePageSize(value) {
 }
 
 /**
- * Builds a reusable WHERE clause + params from the shared filter fields.
- * Keeping this in one place means the count query and the data query can
- * never drift out of sync with each other.
+ * Normalizes equivalent branch clusters so searching matches across synonyms.
+ * mapping example: (AI, AIML, CSM) -> maps all to match any variant in that cluster
  */
+function getEquivalentBranches(branchCode) {
+  const clean = branchCode.toUpperCase();
+  const aiCluster = ["AI", "AIML", "CSM"];
+  if (aiCluster.includes(clean)) {
+    return aiCluster;
+  }
+  return [branchCode];
+}
+
 function buildFilterClause(query) {
   const clauses = ["1=1"];
   const params = [];
@@ -106,7 +113,14 @@ function buildFilterClause(query) {
   const search = cleanString(query.search, MAX_SEARCH_LEN);
 
   if (district) { clauses.push("district = ?"); params.push(district); }
-  if (branchCode) { clauses.push("branch_code = ?"); params.push(branchCode); }
+
+  if (branchCode) {
+    const equivalents = getEquivalentBranches(branchCode);
+    const placeholders = equivalents.map(() => "?").join(",");
+    clauses.push(`branch_code IN (${placeholders})`);
+    params.push(...equivalents);
+  }
+
   if (type) { clauses.push("type = ?"); params.push(type); }
   if (affiliation) { clauses.push("affiliation = ?"); params.push(affiliation); }
   if (search.length >= 2) { clauses.push("institution_name LIKE ?"); params.push(`%${search}%`); }
@@ -115,8 +129,7 @@ function buildFilterClause(query) {
 }
 
 // ---------------------------------------------------------------------------
-// Lightweight in-memory cache for filter/meta lookups (district lists, etc.)
-// These change rarely, so hitting the DB on every page load is wasted work.
+// In-Memory Cache
 // ---------------------------------------------------------------------------
 
 let metaCache = null;
@@ -160,7 +173,7 @@ async function getMeta() {
 }
 
 // ---------------------------------------------------------------------------
-// App setup
+// App configuration
 // ---------------------------------------------------------------------------
 
 const app = express();
@@ -183,8 +196,6 @@ app.use("/api", apiLimiter);
 // Routes
 // ---------------------------------------------------------------------------
 
-// Single combined endpoint: dropdown options + summary stats, cached.
-// Replaces four separate round trips the original client made on every load.
 app.get("/api/meta", async (req, res, next) => {
   try {
     const meta = await getMeta();
@@ -216,12 +227,17 @@ app.get("/api/colleges", async (req, res, next) => {
 
     const { where, params } = buildFilterClause(req.query);
 
-    // category column is validated against a fixed whitelist above, so it is
-    // safe to interpolate directly; the rank value itself stays parameterized.
     const marginExpr = `(${category} - ?)`;
     const fullWhere = `${where} AND ${category} >= ? AND ${category} IS NOT NULL`;
 
-    const orderColumn = sortKey === "margin" ? "margin" : SORT_FIELDS[sortKey];
+    let orderColumn;
+    if (sortKey === "margin") {
+      orderColumn = "margin";
+    } else if (sortKey === "rank") {
+      orderColumn = category;
+    } else {
+      orderColumn = SORT_FIELDS[sortKey];
+    }
 
     const countSql = `SELECT COUNT(*) AS total FROM colleges WHERE ${fullWhere}`;
     const countParams = [...params, rank];
@@ -256,8 +272,6 @@ app.get("/api/colleges", async (req, res, next) => {
   }
 });
 
-// Used by the "shortlist" panel to fetch full rows for a specific set of
-// institution codes, regardless of the current filter/pagination state.
 app.get("/api/colleges/lookup", async (req, res, next) => {
   try {
     const codesRaw = cleanString(req.query.codes, 2000);
@@ -286,7 +300,6 @@ app.use((req, res) => {
   res.status(404).json({ error: "That endpoint does not exist." });
 });
 
-// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something went wrong while processing your request." });
