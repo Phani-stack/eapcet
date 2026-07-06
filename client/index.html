@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>thepha — engineering college rank shortlist</title>
+<meta name="description" content="Shortlist engineering colleges you may be eligible for based on your entrance rank, category and preferences." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F6;
+    --paper-raised:#FFFFFF;
+    --ink:#16233A;
+    --ink-soft:#4B5768;
+    --ink-faint:#7C8797;
+    --line:#D8DEE7;
+    --brass:#8C6A22;
+    --brass-deep:#6E5419;
+    --brass-tint:#F3EBD8;
+    --safe:#2F6B4F;
+    --safe-tint:#E4F0E9;
+    --moderate:#A5710F;
+    --moderate-tint:#FBF0DC;
+    --tight:#A13F2B;
+    --tight-tint:#FBE9E5;
+    --danger:#8C2A1F;
+    --danger-tint:#FCE9E6;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(22,35,58,0.06), 0 8px 24px -12px rgba(22,35,58,0.18);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Fraunces',Georgia,serif;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2.5px solid var(--brass); outline-offset:2px;}
+
+  /* ---------- Disclaimer strip ---------- */
+  .disclaimer{
+    background:var(--danger-tint);
+    color:var(--danger);
+    border-bottom:1px solid #ecc9c1;
+    font-size:13px;
+    padding:10px 16px;
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    position:sticky;
+    top:0;
+    z-index:60;
+  }
+  .disclaimer svg{flex:none; margin-top:1px;}
+  .disclaimer strong{font-weight:700;}
+
+  /* ---------- Header ---------- */
+  header.site{
+    padding:22px 16px 10px;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .wordmark{
+    font-size:26px;
+    font-style:italic;
+    font-weight:600;
+    letter-spacing:0.2px;
+    color:var(--ink);
+  }
+  .wordmark span{color:var(--brass);}
+  .tagline{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    margin-top:2px;
+  }
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:99px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    margin-top:10px;
+  }
+  .status-dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);}
+  .status-pill.ok .status-dot{background:var(--safe);}
+  .status-pill.down .status-dot{background:var(--danger);}
+
+  main{max-width:1180px; margin:0 auto; padding:8px 16px 60px;}
+
+  /* ---------- Stats ---------- */
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin:16px 0 20px;
+  }
+  @media(min-width:720px){ .stat-row{grid-template-columns:repeat(4,1fr);} }
+  .stat-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .stat-card .label{font-size:11.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-faint); font-weight:600;}
+  .stat-card .value{font-family:'Fraunces',serif; font-size:22px; margin-top:2px;}
+
+  /* ---------- Form card ---------- */
+  .form-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px;
+    margin-bottom:20px;
+  }
+  .form-card h2{
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin:0 0 14px;
+    font-style:normal;
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  @media(min-width:640px){ .field-grid{grid-template-columns:repeat(2,1fr);} }
+  @media(min-width:1000px){ .field-grid{grid-template-columns:repeat(4,1fr);} }
+
+  .field label{
+    display:block;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  select,input[type="number"],input[type="text"]{
+    width:100%;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 12px;
+    font-size:14.5px;
+    color:var(--ink);
+    transition:border-color .15s, background .15s;
+  }
+  select:hover,input:hover{border-color:#b9c2d0;}
+  select:focus,input:focus{background:#fff;}
+
+  .rank-field input{
+    border:1.6px solid var(--brass);
+    background:#fff;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:16px;
+  }
+
+  .form-actions{
+    grid-column:1/-1;
+    display:flex;
+    gap:10px;
+    margin-top:4px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    border:none;
+    border-radius:10px;
+    padding:11px 18px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    transition:transform .08s, background .15s;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--ink); color:#fff;}
+  .btn-primary:hover{background:#233350;}
+  .btn-ghost{background:transparent; color:var(--ink-soft); border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--paper);}
+  .btn-brass{background:var(--brass); color:#fff;}
+  .btn-brass:hover{background:var(--brass-deep);}
+  .field-error{color:var(--danger); font-size:12.5px; margin-top:6px; display:none;}
+  .field-error.show{display:block;}
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 4px;
+  }
+  .toolbar-left{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .search-box{position:relative; width:220px; max-width:100%;}
+  .search-box input{padding-left:34px;}
+  .search-box svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-faint);}
+  .sort-select{min-width:170px;}
+  .result-count{font-size:13px; color:var(--ink-soft); font-weight:500;}
+  .shortlist-btn{position:relative;}
+  .shortlist-badge{
+    background:var(--brass);
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    min-width:18px;
+    height:18px;
+    border-radius:99px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 4px;
+  }
+
+  /* ---------- Results list ---------- */
+  .results{display:flex; flex-direction:column; gap:10px;}
+  .row-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-left:5px solid var(--ink-faint);
+    border-radius:12px;
+    padding:14px 16px;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    animation:rise .25s ease both;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .row-card.safe{border-left-color:var(--safe);}
+  .row-card.moderate{border-left-color:var(--moderate);}
+  .row-card.tight{border-left-color:var(--tight);}
+
+  .row-top{display:flex; justify-content:space-between; gap:12px; align-items:flex-start;}
+  .row-main{min-width:0;}
+  .row-code{font-size:12px; color:var(--brass); font-weight:700; letter-spacing:0.03em;}
+  .row-name{font-size:16px; font-weight:600; margin-top:2px; color:var(--ink); line-height:1.3;}
+  .row-place{font-size:12.5px; color:var(--ink-faint); margin-top:2px;}
+
+  .star-btn{
+    background:none; border:none; cursor:pointer; padding:4px;
+    color:var(--ink-faint); flex:none;
+  }
+  .star-btn.active{color:var(--brass);}
+  .star-btn svg{display:block;}
+
+  .chip-row{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{
+    font-size:11.5px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:99px;
+    background:var(--paper);
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+  }
+
+  .row-bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    border-top:1px solid var(--line);
+    padding-top:10px;
+  }
+  .metric{display:flex; flex-direction:column; gap:2px;}
+  .metric .m-label{font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-faint); font-weight:700;}
+  .metric .m-value{font-size:15px; font-weight:600;}
+  .metric.fee .m-value{color:var(--safe);}
+
+  .margin-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:700; padding:5px 10px; border-radius:99px;
+  }
+  .margin-badge.safe{background:var(--safe-tint); color:var(--safe);}
+  .margin-badge.moderate{background:var(--moderate-tint); color:var(--moderate);}
+  .margin-badge.tight{background:var(--tight-tint); color:var(--tight);}
+
+  .empty-state, .loading-state, .error-state{
+    text-align:center;
+    padding:56px 20px;
+    color:var(--ink-faint);
+    background:var(--paper-raised);
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+  }
+  .empty-state svg, .loading-state svg{margin-bottom:10px;}
+  .error-state{color:var(--danger); border-color:#ecc9c1; background:var(--danger-tint);}
+  .spinner{
+    width:26px; height:26px; border-radius:50%;
+    border:3px solid var(--line); border-top-color:var(--brass);
+    animation:spin .7s linear infinite; margin:0 auto 10px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Pagination ---------- */
+  .pagination{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    margin-top:20px; font-size:13.5px; color:var(--ink-soft);
+  }
+  .page-btn{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:8px;
+    width:34px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    color:var(--ink);
+  }
+  .page-btn:disabled{opacity:0.4; cursor:not-allowed;}
+
+  /* ---------- Shortlist drawer ---------- */
+  .drawer-backdrop{
+    position:fixed; inset:0; background:rgba(22,35,58,0.4);
+    opacity:0; pointer-events:none; transition:opacity .2s; z-index:80;
+  }
+  .drawer-backdrop.open{opacity:1; pointer-events:auto;}
+  .drawer{
+    position:fixed; right:0; top:0; bottom:0; width:100%; max-width:440px;
+    background:var(--paper-raised); box-shadow:-8px 0 30px rgba(22,35,58,0.18);
+    transform:translateX(100%); transition:transform .25s ease; z-index:90;
+    display:flex; flex-direction:column;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{
+    padding:18px 20px; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .drawer-head h3{margin:0; font-size:18px;}
+  .drawer-close{background:none; border:none; cursor:pointer; color:var(--ink-soft);}
+  .drawer-body{flex:1; overflow-y:auto; padding:14px 20px;}
+  .drawer-item{
+    border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:10px;
+  }
+  .drawer-item-top{display:flex; justify-content:space-between; gap:10px;}
+  .drawer-item .name{font-weight:600; font-size:14px;}
+  .drawer-item .meta{font-size:12px; color:var(--ink-faint); margin-top:3px;}
+  .drawer-remove{background:none; border:none; color:var(--tight); cursor:pointer; font-size:12px; font-weight:600;}
+  .drawer-foot{padding:16px 20px; border-top:1px solid var(--line); display:flex; gap:10px;}
+  .drawer-empty{color:var(--ink-faint); font-size:13.5px; text-align:center; padding:40px 10px;}
+
+  footer{
+    text-align:center; color:var(--ink-faint); font-size:12px; padding:30px 16px 50px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="disclaimer" role="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+    <span><strong>Not an official result.</strong> thepha estimates eligibility from a previous year's closing ranks. Cutoffs shift every year — always confirm against the official counselling notification before making a decision.</span>
+  </div>
+
+  <header class="site">
+    <div class="wordmark">the<span>pha</span></div>
+    <div class="tagline">A quick reality check on which engineering colleges your rank may reach — always double check with the official source.</div>
+    <span class="status-pill" id="connection-status"><span class="status-dot"></span> Checking connection…</span>
+  </header>
+
+  <main>
+    <section class="stat-row" id="stat-row" aria-label="Database summary">
+      <div class="stat-card"><div class="label">Colleges Indexed</div><div class="value" id="stat-colleges">—</div></div>
+      <div class="stat-card"><div class="label">Districts</div><div class="value" id="stat-districts">—</div></div>
+      <div class="stat-card"><div class="label">Branches</div><div class="value" id="stat-branches">—</div></div>
+      <div class="stat-card"><div class="label">Average Fee</div><div class="value" id="stat-fee">—</div></div>
+    </section>
+
+    <section class="form-card">
+      <h2>Your details</h2>
+      <div class="field-grid" id="filter-form">
+        <div class="field rank-field">
+          <label for="filter-rank">Entrance rank</label>
+          <input type="number" id="filter-rank" min="1" placeholder="e.g. 24500" inputmode="numeric" />
+          <div class="field-error" id="rank-error">Enter a rank between 1 and 1,000,000.</div>
+        </div>
+        <div class="field">
+          <label for="filter-category">Reservation category</label>
+          <select id="filter-category">
+            <option value="oc_boys">OC — Boys</option><option value="oc_girls">OC — Girls</option>
+            <option value="sc_boys">SC — Boys</option><option value="sc_girls">SC — Girls</option>
+            <option value="st_boys">ST — Boys</option><option value="st_girls">ST — Girls</option>
+            <option value="bca_boys">BC A — Boys</option><option value="bca_girls">BC A — Girls</option>
+            <option value="bcb_boys">BC B — Boys</option><option value="bcb_girls">BC B — Girls</option>
+            <option value="bcc_boys">BC C — Boys</option><option value="bcc_girls">BC C — Girls</option>
+            <option value="bcd_boys">BC D — Boys</option><option value="bcd_girls">BC D — Girls</option>
+            <option value="bce_boys">BC E — Boys</option><option value="bce_girls">BC E — Girls</option>
+            <option value="oc_ews_boys">EWS — Boys</option><option value="oc_ews_girls">EWS — Girls</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filter-district">District</label>
+          <select id="filter-district"><option value="">Any district</option></select>
+        </div>
+        <div class="field">
+          <label for="filter-branch">Branch</label>
+          <select id="filter-branch"><option value="">Any branch</option></select>
+        </div>
+        <div class="field">
+          <label for="filter-type">Management type</label>
+          <select id="filter-type"><option value="">Any type</option></select>
+        </div>
+        <div class="field">
+          <label for="filter-affiliation">Affiliation</label>
+          <select id="filter-affiliation"><option value="">Any affiliation</option></select>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-submit" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            Build my shortlist
+          </button>
+          <button class="btn btn-ghost" id="btn-reset" type="button">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="results-section" hidden>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="filter-search" placeholder="Search college name…" />
+          </div>
+          <select class="sort-select" id="sort-select">
+            <option value="margin-asc">Closest matches first</option>
+            <option value="margin-desc">Safest matches first</option>
+            <option value="fee-asc">Lowest fee first</option>
+            <option value="fee-desc">Highest fee first</option>
+            <option value="name-asc">College name (A–Z)</option>
+          </select>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="result-count" id="row-count" aria-live="polite"></span>
+          <button class="btn btn-ghost" id="btn-export">Export CSV</button>
+          <button class="btn btn-brass shortlist-btn" id="btn-open-drawer">
+            Shortlist <span class="shortlist-badge" id="shortlist-count">0</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="results" id="results-list"></div>
+      <div class="pagination" id="pagination" hidden></div>
+    </section>
+
+    <section id="idle-state" class="empty-state">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 4 8v8l8 5 8-5V8z"/><path d="M12 12v9M4 8l8 4 8-4"/></svg>
+      <p>Enter your rank and category above, then select <strong>Build my shortlist</strong>.</p>
+    </section>
+  </main>
+
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="drawer" id="drawer" aria-label="Shortlisted colleges">
+    <div class="drawer-head">
+      <h3>Your shortlist</h3>
+      <button class="drawer-close" id="drawer-close" aria-label="Close shortlist">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body" id="drawer-body">
+      <p class="drawer-empty">Tap the star on any college to add it here for side-by-side comparison.</p>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn btn-ghost" id="btn-clear-shortlist" style="flex:1;">Clear all</button>
+      <button class="btn btn-brass" id="btn-export-shortlist" style="flex:1;">Export CSV</button>
+    </div>
+  </aside>
+
+  <footer>
+    thepha uses historical closing-rank data for guidance only and is not affiliated with any admissions authority. Verify all figures officially before deciding.
+  </footer>
+
+<script>
+(function(){
+  const BASE_URL = window.THEPHA_API_BASE || "http://localhost:5000";
+  const CATEGORY_LABELS = {};
+  document.querySelectorAll('#filter-category option').forEach(o => CATEGORY_LABELS[o.value] = o.textContent);
+
+  const els = {
+    status: document.getElementById('connection-status'),
+    statColleges: document.getElementById('stat-colleges'),
+    statDistricts: document.getElementById('stat-districts'),
+    statBranches: document.getElementById('stat-branches'),
+    statFee: document.getElementById('stat-fee'),
+    district: document.getElementById('filter-district'),
+    branch: document.getElementById('filter-branch'),
+    type: document.getElementById('filter-type'),
+    affiliation: document.getElementById('filter-affiliation'),
+    category: document.getElementById('filter-category'),
+    rank: document.getElementById('filter-rank'),
+    rankError: document.getElementById('rank-error'),
+    search: document.getElementById('filter-search'),
+    sort: document.getElementById('sort-select'),
+    submit: document.getElementById('btn-submit'),
+    reset: document.getElementById('btn-reset'),
+    idle: document.getElementById('idle-state'),
+    resultsSection: document.getElementById('results-section'),
+    resultsList: document.getElementById('results-list'),
+    rowCount: document.getElementById('row-count'),
+    pagination: document.getElementById('pagination'),
+    exportBtn: document.getElementById('btn-export'),
+    drawer: document.getElementById('drawer'),
+    drawerBackdrop: document.getElementById('drawer-backdrop'),
+    drawerBody: document.getElementById('drawer-body'),
+    openDrawerBtn: document.getElementById('btn-open-drawer'),
+    closeDrawerBtn: document.getElementById('drawer-close'),
+    shortlistCount: document.getElementById('shortlist-count'),
+    clearShortlistBtn: document.getElementById('btn-clear-shortlist'),
+    exportShortlistBtn: document.getElementById('btn-export-shortlist')
+  };
+
+  // In-memory only (no persistence across reloads by design).
+  const shortlist = new Map(); // inst_code -> row
+  let state = { page: 1, pageSize: 20, category: 'oc_boys' };
+  let searchDebounce = null;
+
+  function money(n){
+    if (n === null || n === undefined || isNaN(n)) return "—";
+    return "₹" + Math.round(n).toLocaleString('en-IN');
+  }
+
+  function marginTier(marginRatio){
+    if (marginRatio >= 0.4) return 'safe';
+    if (marginRatio >= 0.15) return 'moderate';
+    return 'tight';
+  }
+  const tierLabel = { safe: 'Comfortable margin', moderate: 'Moderate margin', tight: 'Tight margin' };
+
+  async function fetchJSON(url){
+    const res = await fetch(url);
+    let body = null;
+    try { body = await res.json(); } catch(e) { /* non-json */ }
+    if (!res.ok) throw new Error((body && body.error) || `Request failed (${res.status})`);
+    return body;
+  }
+
+  function fillSelect(el, values){
+    values.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      el.appendChild(opt);
+    });
+  }
+
+  async function loadMeta(){
+    try {
+      const meta = await fetchJSON(`${BASE_URL}/api/meta`);
+      fillSelect(els.district, meta.districts);
+      fillSelect(els.branch, meta.branches);
+      fillSelect(els.type, meta.types);
+      fillSelect(els.affiliation, meta.affiliations);
+      els.statColleges.textContent = Number(meta.stats.totalColleges).toLocaleString('en-IN');
+      els.statDistricts.textContent = meta.stats.totalDistricts;
+      els.statBranches.textContent = meta.stats.totalBranches;
+      els.statFee.textContent = money(meta.stats.averageFee);
+      setStatus(true);
+    } catch (err) {
+      setStatus(false);
+    }
+  }
+
+  function setStatus(ok){
+    els.status.classList.toggle('ok', ok);
+    els.status.classList.toggle('down', !ok);
+    els.status.innerHTML = ok
+      ? '<span class="status-dot"></span> Connected'
+      : '<span class="status-dot"></span> Server unreachable';
+  }
+
+  function validateRank(){
+    const v = Number(els.rank.value);
+    const valid = els.rank.value !== '' && Number.isInteger(v) && v > 0 && v <= 1000000;
+    els.rankError.classList.toggle('show', !valid && els.rank.value !== '');
+    return valid;
+  }
+
+  function buildParams(extra){
+    const [sortKey, order] = els.sort.value.split('-');
+    const params = new URLSearchParams({
+      rank: els.rank.value,
+      category: els.category.value,
+      district: els.district.value,
+      branch_code: els.branch.value,
+      type: els.type.value,
+      affiliation: els.affiliation.value,
+      search: els.search.value.trim(),
+      sort: sortKey,
+      order: order,
+      page: state.page,
+      pageSize: state.pageSize
+    });
+    if (extra) Object.entries(extra).forEach(([k,v]) => params.set(k, v));
+    return params;
+  }
+
+  function renderLoading(){
+    els.resultsList.innerHTML = `<div class="loading-state"><div class="spinner"></div>Looking through the college registry…</div>`;
+    els.pagination.hidden = true;
+  }
+
+  function renderError(msg){
+    els.resultsList.innerHTML = `<div class="error-state">${escapeHTML(msg)}</div>`;
+    els.pagination.hidden = true;
+  }
+
+  function escapeHTML(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function renderResults(payload){
+    const { results, pagination } = payload;
+    const category = els.category.value;
+
+    if (!results.length){
+      els.resultsList.innerHTML = `<div class="empty-state">No colleges match this combination of rank, category and filters. Try widening a filter or double-check the rank entered.</div>`;
+      els.pagination.hidden = true;
+      els.rowCount.textContent = '0 matches';
+      return;
+    }
+
+    els.rowCount.textContent = `${pagination.total.toLocaleString('en-IN')} match${pagination.total === 1 ? '' : 'es'}`;
+
+    els.resultsList.innerHTML = results.map(row => {
+      const rank = Number(els.rank.value);
+      const margin = row.margin;
+      const ratio = rank > 0 ? margin / rank : 0;
+      const tier = marginTier(ratio);
+      const isStarred = shortlist.has(row.inst_code);
+      return `
+      <article class="row-card ${tier}">
+        <div class="row-top">
+          <div class="row-main">
+            <div class="row-code mono">${escapeHTML(row.inst_code)}</div>
+            <div class="row-name">${escapeHTML(row.institution_name)}</div>
+            <div class="row-place">${escapeHTML(row.place || '')}${row.place ? ', ' : ''}${escapeHTML(row.district || '')}</div>
+          </div>
+          <button class="star-btn ${isStarred ? 'active' : ''}" data-code="${escapeHTML(row.inst_code)}" aria-label="${isStarred ? 'Remove from' : 'Add to'} shortlist" title="${isStarred ? 'Remove from' : 'Add to'} shortlist">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="${isStarred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5l3.09 6.26 6.91 1-5 4.87 1.18 6.88L12 17.9l-6.18 3.61L7 14.63l-5-4.87 6.91-1z"/></svg>
+          </button>
+        </div>
+        <div class="chip-row">
+          <span class="chip">${escapeHTML(row.type || '—')}</span>
+          <span class="chip">${escapeHTML(row.branch_code || '—')}</span>
+          <span class="chip">${escapeHTML(row.affiliation || '—')}</span>
+        </div>
+        <div class="row-bottom">
+          <div class="metric">
+            <span class="m-label">Closing rank</span>
+            <span class="m-value mono">${row[category] ? Math.round(row[category]).toLocaleString('en-IN') : '—'}</span>
+          </div>
+          <div class="metric fee">
+            <span class="m-label">Annual fee</span>
+            <span class="m-value mono">${money(row.college_fee)}</span>
+          </div>
+          <span class="margin-badge ${tier}">${tierLabel[tier]}</span>
+        </div>
+      </article>`;
+    }).join('');
+
+    els.resultsList.querySelectorAll('.star-btn').forEach(btn => {
+      btn.addEventListener('click', () => toggleShortlist(btn.dataset.code, results));
+    });
+
+    renderPagination(pagination);
+  }
+
+  function renderPagination(p){
+    if (p.totalPages <= 1){ els.pagination.hidden = true; return; }
+    els.pagination.hidden = false;
+    els.pagination.innerHTML = `
+      <button class="page-btn" id="prev-page" ${p.page <= 1 ? 'disabled' : ''} aria-label="Previous page">‹</button>
+      <span>Page ${p.page} of ${p.totalPages}</span>
+      <button class="page-btn" id="next-page" ${p.page >= p.totalPages ? 'disabled' : ''} aria-label="Next page">›</button>
+    `;
+    document.getElementById('prev-page')?.addEventListener('click', () => { state.page--; runSearch(); });
+    document.getElementById('next-page')?.addEventListener('click', () => { state.page++; runSearch(); });
+  }
+
+  function toggleShortlist(code, currentResults){
+    if (shortlist.has(code)){
+      shortlist.delete(code);
+    } else {
+      const row = currentResults.find(r => r.inst_code === code);
+      if (row) shortlist.set(code, row);
+    }
+    updateShortlistUI();
+    // Refresh star state on visible cards without a full re-fetch.
+    els.resultsList.querySelectorAll('.star-btn').forEach(btn => {
+      const active = shortlist.has(btn.dataset.code);
+      btn.classList.toggle('active', active);
+      btn.querySelector('svg').setAttribute('fill', active ? 'currentColor' : 'none');
+    });
+  }
+
+  function updateShortlistUI(){
+    els.shortlistCount.textContent = shortlist.size;
+    if (!shortlist.size){
+      els.drawerBody.innerHTML = `<p class="drawer-empty">Tap the star on any college to add it here for side-by-side comparison.</p>`;
+      return;
+    }
+    const category = els.category.value;
+    els.drawerBody.innerHTML = [...shortlist.values()].map(row => `
+      <div class="drawer-item">
+        <div class="drawer-item-top">
+          <div>
+            <div class="name">${escapeHTML(row.institution_name)}</div>
+            <div class="meta">${escapeHTML(row.branch_code)} · ${escapeHTML(row.district || '')} · ${money(row.college_fee)}</div>
+            <div class="meta">Closing rank (${escapeHTML(CATEGORY_LABELS[category] || category)}): ${row[category] ? Math.round(row[category]).toLocaleString('en-IN') : '—'}</div>
+          </div>
+          <button class="drawer-remove" data-code="${escapeHTML(row.inst_code)}">Remove</button>
+        </div>
+      </div>
+    `).join('');
+    els.drawerBody.querySelectorAll('.drawer-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        shortlist.delete(btn.dataset.code);
+        updateShortlistUI();
+        els.resultsList.querySelectorAll(`.star-btn[data-code="${CSS.escape(btn.dataset.code)}"]`).forEach(b => {
+          b.classList.remove('active');
+          b.querySelector('svg').setAttribute('fill', 'none');
+        });
+      });
+    });
+  }
+
+  function toCSV(rows, category){
+    const headers = ['inst_code','institution_name','type','district','place','branch_code','affiliation', category, 'college_fee'];
+    const lines = [headers.join(',')];
+    rows.forEach(r => {
+      const line = headers.map(h => {
+        const v = r[h] === null || r[h] === undefined ? '' : String(r[h]).replace(/"/g, '""');
+        return `"${v}"`;
+      }).join(',');
+      lines.push(line);
+    });
+    return lines.join('\n');
+  }
+
+  function downloadCSV(content, filename){
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function exportCurrentResults(){
+    if (!validateRank()) return;
+    try {
+      const params = buildParams({ page: 1, pageSize: 500 });
+      const data = await fetchJSON(`${BASE_URL}/api/colleges?${params.toString()}`);
+      downloadCSV(toCSV(data.results, els.category.value), 'thepha-shortlist-results.csv');
+    } catch (err) {
+      alert('Could not export results: ' + err.message);
+    }
+  }
+
+  function exportShortlist(){
+    if (!shortlist.size) return;
+    downloadCSV(toCSV([...shortlist.values()], els.category.value), 'thepha-my-shortlist.csv');
+  }
+
+  async function runSearch(){
+    if (!validateRank()){
+      els.idle.hidden = true;
+      els.resultsSection.hidden = false;
+      renderError('Please enter a valid rank before searching.');
+      return;
+    }
+    els.idle.hidden = true;
+    els.resultsSection.hidden = false;
+    renderLoading();
+    try {
+      const params = buildParams();
+      const data = await fetchJSON(`${BASE_URL}/api/colleges?${params.toString()}`);
+      renderResults(data);
+    } catch (err) {
+      renderError(err.message || 'Something went wrong fetching results. Confirm the API server is running.');
+    }
+  }
+
+  function resetAll(){
+    els.rank.value = '';
+    els.category.value = 'oc_boys';
+    els.district.value = '';
+    els.branch.value = '';
+    els.type.value = '';
+    els.affiliation.value = '';
+    els.search.value = '';
+    els.sort.value = 'margin-asc';
+    state.page = 1;
+    els.rankError.classList.remove('show');
+    els.resultsSection.hidden = true;
+    els.idle.hidden = false;
+  }
+
+  function openDrawer(){
+    els.drawer.classList.add('open');
+    els.drawerBackdrop.classList.add('open');
+  }
+  function closeDrawer(){
+    els.drawer.classList.remove('open');
+    els.drawerBackdrop.classList.remove('open');
+  }
+
+  els.submit.addEventListener('click', () => { state.page = 1; runSearch(); });
+  els.reset.addEventListener('click', resetAll);
+  els.rank.addEventListener('input', validateRank);
+  els.sort.addEventListener('change', () => { state.page = 1; runSearch(); });
+  [els.district, els.branch, els.type, els.affiliation, els.category].forEach(el => {
+    el.addEventListener('change', () => {
+      if (!els.resultsSection.hidden){ state.page = 1; runSearch(); }
+    });
+  });
+  els.search.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      if (!els.resultsSection.hidden){ state.page = 1; runSearch(); }
+    }, 350);
+  });
+  els.exportBtn.addEventListener('click', exportCurrentResults);
+  els.exportShortlistBtn.addEventListener('click', exportShortlist);
+  els.clearShortlistBtn.addEventListener('click', () => {
+    shortlist.clear();
+    updateShortlistUI();
+    document.querySelectorAll('.star-btn.active').forEach(b => {
+      b.classList.remove('active');
+      b.querySelector('svg').setAttribute('fill', 'none');
+    });
+  });
+  els.openDrawerBtn.addEventListener('click', openDrawer);
+  els.closeDrawerBtn.addEventListener('click', closeDrawer);
+  els.drawerBackdrop.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
+  loadMeta();
+})();
+</script>
+</body>
+</html>
